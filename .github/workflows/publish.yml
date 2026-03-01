@@ -35,3 +35,8 @@ jobs:
 
       - name: Publish to npm
         run: npm i -g npm@^11.5.2 && pnpm run publish-ci ${{ github.ref_name }}
+
+      - name: Generate Changelog
+        run: npx changelogithub
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
