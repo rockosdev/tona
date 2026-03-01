@@ -1,4 +1,5 @@
-import { useState } from 'preact/hooks'
+import { useRef, useState } from 'preact/hooks'
+import { useLocalStorage } from 'tona-hooks'
 import { cn } from '@/lib/utils'
 import { HoverCard } from './hover-card'
 import { MemoedItem } from './memoed-toc-item'
@@ -20,6 +21,27 @@ export const LineToc = ({
   handleScrollTo,
 }: Props) => {
   const [hoverShow, setHoverShow] = useState(false)
+  const [pinned, setPinned] = useLocalStorage<boolean>(
+    '_tona_theme-shadcn-post-toc-pinned',
+    false,
+  )
+  const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const shouldHoverCardOpen = pinned || hoverShow
+
+  const handleMouseEnter = () => {
+    hoverTimerRef.current = setTimeout(() => setHoverShow(true), 800)
+  }
+
+  const handleMouseLeave = () => {
+    if (hoverTimerRef.current) {
+      clearTimeout(hoverTimerRef.current)
+      hoverTimerRef.current = null
+    }
+  }
+
+  const handlePinToggle = () => {
+    setPinned(!pinned)
+  }
 
   return (
     <div className='scrollbar-none flex grow flex-col scroll-smooth px-2'>
@@ -28,7 +50,8 @@ export const LineToc = ({
           'group scrollbar-none overflow-auto opacity-60 duration-200 group-hover:opacity-100',
           className,
         )}
-        onMouseEnter={() => setHoverShow(true)}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
         {toc.map((heading, index) => (
           <MemoedItem
@@ -42,12 +65,14 @@ export const LineToc = ({
         ))}
       </div>
       <HoverCard
-        show={hoverShow}
+        open={shouldHoverCardOpen}
+        pinned={!!pinned}
         toc={toc}
         rootDepth={rootDepth}
         currentScrollRange={currentScrollRange}
         onScrollToButtonClick={handleScrollTo}
-        onMouseLeave={() => setHoverShow(false)}
+        onMouseLeave={() => !pinned && setHoverShow(false)}
+        onPinToggle={handlePinToggle}
       />
     </div>
   )

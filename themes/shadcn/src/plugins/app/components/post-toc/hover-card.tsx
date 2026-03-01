@@ -1,8 +1,11 @@
+import { Pin, PinOff } from 'lucide-preact'
+import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import type { TocDataItem } from './toc-item'
 
 interface Props {
-  show: boolean
+  open: boolean
+  pinned: boolean
   toc: TocDataItem[]
   rootDepth: number
   currentScrollRange: [number, number]
@@ -12,57 +15,71 @@ interface Props {
     anchorId: string,
   ) => void
   onMouseLeave: () => void
+  onPinToggle: () => void
 }
 
 export function HoverCard({
-  show,
+  open,
+  pinned,
   toc,
   rootDepth,
   currentScrollRange,
   onScrollToButtonClick,
   onMouseLeave,
+  onPinToggle,
 }: Props) {
   return (
-    <ul
+    <div
       className={cn(
-        'fixed top-24 right-0 z-1000 -mt-1 rounded-2xl border',
-        'px-4 py-2 text-xs',
-        'bg-background shadow-context-menu backdrop-blur-background',
-        'scrollbar-none max-h-[calc(100svh-4rem)] max-w-xs overflow-auto',
-        'transition-all duration-200 ease-in-out',
-        show
+        'fixed top-24 right-0 z-1000 -mt-1 flex max-h-[calc(100svh-4rem)] max-w-72 flex-col text-xs',
+        'bg-background',
+        'scrollbar-none overflow-hidden',
+        'transition-transform duration-200 ease-in-out',
+        open
           ? 'pointer-events-auto translate-x-0 opacity-100'
           : 'pointer-events-none translate-x-2 opacity-0',
       )}
       onMouseLeave={onMouseLeave}
     >
-      {toc.map((heading, index) => (
-        <li
-          key={heading.anchorId}
-          className='flex w-full items-center'
-          style={{
-            paddingLeft: `${(heading.depth - rootDepth) * 12}px`,
-          }}
+      <div className='flex justify-end p-1'>
+        <Button
+          variant='ghost'
+          size='icon-sm'
+          onClick={onPinToggle}
+          aria-label={pinned ? '取消钉住' : '钉住'}
         >
-          <button
-            className={cn(
-              'group flex w-full justify-between py-1 text-muted-foreground',
-              index === currentScrollRange[0] ? 'text-foreground' : '',
-            )}
-            type='button'
-            onClick={() => {
-              onScrollToButtonClick(index, heading.$heading, heading.anchorId)
+          {pinned ? <PinOff /> : <Pin />}
+        </Button>
+      </div>
+      <ul className='scrollbar-none overflow-auto rounded-2xl border px-4 py-2'>
+        {toc.map((heading, index) => (
+          <li
+            key={heading.anchorId}
+            className='flex w-full items-center'
+            style={{
+              paddingLeft: `${(heading.depth - rootDepth) * 12}px`,
             }}
           >
-            <span className='max-w-prose select-none truncate duration-200 group-hover:text-foreground/80'>
-              {heading.title}
-            </span>
-            <span className='ml-4 select-none text-[8px] opacity-50'>
-              H{heading.depth}
-            </span>
-          </button>
-        </li>
-      ))}
-    </ul>
+            <button
+              className={cn(
+                'group flex w-full justify-between py-1 text-muted-foreground',
+                index === currentScrollRange[0] ? 'text-foreground' : '',
+              )}
+              type='button'
+              onClick={() => {
+                onScrollToButtonClick(index, heading.$heading, heading.anchorId)
+              }}
+            >
+              <span className='max-w-prose select-none truncate duration-200 group-hover:text-foreground/80'>
+                {heading.title}
+              </span>
+              <span className='ml-4 select-none text-[8px] opacity-50'>
+                H{heading.depth}
+              </span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
   )
 }
