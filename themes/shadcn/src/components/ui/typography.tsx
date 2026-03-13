@@ -10,7 +10,7 @@ function Prose({
 }: React.ComponentProps<'div'> & {
   asChild?: boolean
 }) {
-  const Comp = asChild ? Slot : 'div'
+  const Comp = asChild ? (Slot as React.ElementType) : 'div'
 
   return (
     <Comp
