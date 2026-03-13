@@ -15,7 +15,7 @@
   ],
   "type": "module",
   "scripts": {
-    "dev": "vite --force",
+    "dev": "vite",
     "build": "vite build"
   },
   "dependencies": {
