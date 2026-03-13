@@ -1,0 +1,34 @@
+{
+  "name": "tona-preact-starter",
+  "description": "A modern Preact + TypeScript starter template for Tona themes.",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@base-ui/react": "latest",
+    "@preact/signals": "latest",
+    "class-variance-authority": "latest",
+    "clsx": "latest",
+    "lucide-preact": "latest",
+    "preact": "latest",
+    "tailwind-merge": "latest",
+    "tona": "latest",
+    "tona-hooks": "latest",
+    "tona-options": "latest",
+    "tona-ui": "latest",
+    "tona-utils": "latest"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "latest",
+    "@tailwindcss/vite": "latest",
+    "@types/node": "latest",
+    "tailwindcss": "latest",
+    "tona-vite": "latest",
+    "typescript": "~5.9.3",
+    "vite": "latest"
+  }
+}

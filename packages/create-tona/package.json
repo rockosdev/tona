@@ -9,8 +9,8 @@
   },
   "files": [
     "index.js",
-    "template-js",
-    "template-ts",
+    "template-minimal",
+    "template-preact",
     "dist"
   ],
   "scripts": {
@@ -35,10 +35,14 @@
   "devDependencies": {
     "@clack/prompts": "catalog:",
     "@types/cross-spawn": "catalog:",
+    "@types/gradient-string": "^1.1.6",
     "@types/node": "catalog:",
     "cross-spawn": "catalog:",
     "mri": "catalog:",
     "picocolors": "catalog:",
     "tsdown": "catalog:"
+  },
+  "dependencies": {
+    "gradient-string": "^3.0.0"
   }
 }

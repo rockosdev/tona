@@ -7,7 +7,10 @@ import spawn from 'cross-spawn'
 import mri from 'mri'
 import colors from 'picocolors'
 
-const { blue, yellow } = colors
+import { DEFAULT_APP_NAME } from './consts.js'
+import { renderTitle } from './utils/renderTitle.js'
+
+const { blue, yellow, red, cyan } = colors
 
 const argv = mri<{
   template?: string
@@ -15,9 +18,11 @@ const argv = mri<{
   overwrite?: boolean
   immediate?: boolean
   interactive?: boolean
+  git?: boolean
+  install?: boolean
 }>(process.argv.slice(2), {
-  boolean: ['help', 'overwrite', 'immediate', 'interactive'],
-  alias: { h: 'help', t: 'template', i: 'immediate' },
+  boolean: ['help', 'overwrite', 'immediate', 'interactive', 'git', 'install'],
+  alias: { h: 'help', t: 'template', i: 'immediate', g: 'git' },
   string: ['template'],
 })
 const cwd = process.cwd()
@@ -26,25 +31,23 @@ const cwd = process.cwd()
 const helpMessage = `\
 Usage: create-tona [OPTION]... [DIRECTORY]
 
-Create a new Tona theme project in JavaScript or TypeScript.
+Create a new Tona theme project with TypeScript.
 When running in TTY, the CLI will start in interactive mode.
 
 Options:
-  -t, --template NAME                   use a specific template (js or ts)
+  -t, --template NAME                   use a specific template (minimal or preact)
   -i, --immediate                       install dependencies and start dev
+  -g, --git                             initialize git repository and stage changes
+  --install                             install dependencies only
   --interactive / --no-interactive      force interactive / non-interactive mode
 
 Available templates:
-${blue('ts                  TypeScript')}
-${yellow('js                  JavaScript')}`
-
-const TEMPLATES = ['js', 'ts']
+${cyan('preact              Preact + TypeScript (recommended)')}
+${blue('minimal             Minimal TypeScript')}`
 
 const renameFiles: Record<string, string | undefined> = {
   _gitignore: '.gitignore',
 }
-
-const defaultTargetDir = 'tona-theme'
 
 function run([command, ...args]: string[], options?: SpawnOptions) {
   const { status, error } = spawn.sync(command, args, options)
@@ -59,15 +62,16 @@ function run([command, ...args]: string[], options?: SpawnOptions) {
   }
 }
 
-function install(root: string, agent: string) {
+function install(root: string, agent: string, registry?: string) {
   if (process.env._VITE_TEST_CLI) {
     prompts.log.step(
       `Installing dependencies with ${agent}... (skipped in test)`,
     )
     return
   }
-  prompts.log.step(`Installing dependencies with ${agent}...`)
-  run(getInstallCommand(agent), {
+  const registryInfo = registry ? ` (${registry})` : ''
+  prompts.log.step(`Installing dependencies with ${agent}${registryInfo}...`)
+  run(getInstallCommand(agent, registry), {
     stdio: 'inherit',
     cwd: root,
   })
@@ -86,6 +90,8 @@ function start(root: string, agent: string) {
 }
 
 async function init() {
+  renderTitle()
+
   const argTargetDir = argv._[0]
     ? formatTargetDir(String(argv._[0]))
     : undefined
@@ -93,6 +99,8 @@ async function init() {
   const argOverwrite = argv.overwrite
   const argImmediate = argv.immediate
   const argInteractive = argv.interactive
+  const argGit = argv.git
+  const argInstall = argv.install
 
   const help = argv.help
   if (help) {
@@ -111,9 +119,10 @@ async function init() {
     if (interactive) {
       const projectName = await prompts.text({
         message: 'Project name:',
-        defaultValue: defaultTargetDir,
-        placeholder: defaultTargetDir,
+        defaultValue: DEFAULT_APP_NAME,
+        placeholder: DEFAULT_APP_NAME,
         validate: (value) => {
+          if (!value) return 'Invalid project name'
           return value.length === 0 || formatTargetDir(value).length > 0
             ? undefined
             : 'Invalid project name'
@@ -122,7 +131,7 @@ async function init() {
       if (prompts.isCancel(projectName)) return cancel()
       targetDir = formatTargetDir(projectName)
     } else {
-      targetDir = defaultTargetDir
+      targetDir = DEFAULT_APP_NAME
     }
   }
 
@@ -178,7 +187,7 @@ async function init() {
         defaultValue: toValidPackageName(packageName),
         placeholder: toValidPackageName(packageName),
         validate(dir) {
-          if (!isValidPackageName(dir)) {
+          if (!dir || !isValidPackageName(dir)) {
             return 'Invalid package.json name'
           }
         },
@@ -190,10 +199,32 @@ async function init() {
     }
   }
 
-  // 4. Choose template
+  // 4. Choose language (typescript/javascript) - javascript auto-switches to typescript
+  if (interactive) {
+    const languageResult = await prompts.select({
+      message: 'Select language:',
+      options: [
+        {
+          label: blue('TypeScript (recommended)'),
+          value: 'ts',
+        },
+        {
+          label: yellow('JavaScript'),
+          value: 'js',
+        },
+      ],
+    })
+    if (prompts.isCancel(languageResult)) return cancel()
+
+    if (languageResult === 'js') {
+      prompts.log.warn(red('Wrong answer, using TypeScript instead'))
+    }
+  }
+
+  // 5. Choose template
   let template = argTemplate
   let hasInvalidArgTemplate = false
-  if (argTemplate && !TEMPLATES.includes(argTemplate)) {
+  if (argTemplate && !['minimal', 'preact'].includes(argTemplate)) {
     template = undefined
     hasInvalidArgTemplate = true
   }
@@ -205,35 +236,89 @@ async function init() {
           : 'Select a template:',
         options: [
           {
-            label: blue('TypeScript'),
-            value: 'ts',
+            label: cyan('preact (recommended)'),
+            value: 'preact',
           },
           {
-            label: yellow('JavaScript'),
-            value: 'js',
+            label: blue('minimal'),
+            value: 'minimal',
           },
         ],
       })
       if (prompts.isCancel(templateResult)) return cancel()
       template = templateResult
     } else {
-      template = 'ts'
+      template = 'minimal'
     }
   }
 
-  const pkgManager = pkgInfo ? pkgInfo.name : 'npm'
+  let pkgManager = pkgInfo ? pkgInfo.name : 'npm'
 
-  // 5. Ask about immediate install and package manager
-  let immediate = argImmediate
-  if (immediate === undefined) {
+  const hasPnpm =
+    spawn.sync('pnpm', ['--version'], { stdio: 'ignore' }).status === 0
+  if (hasPnpm) {
+    pkgManager = 'pnpm'
+  }
+
+  // 6. Ask about git initialization
+  let initGit = argGit
+  if (initGit === undefined) {
     if (interactive) {
-      const immediateResult = await prompts.confirm({
-        message: `Install with ${pkgManager} and start now?`,
+      const gitResult = await prompts.confirm({
+        message: 'Initialize a Git repository and stage the changes?',
       })
-      if (prompts.isCancel(immediateResult)) return cancel()
-      immediate = immediateResult
+      if (prompts.isCancel(gitResult)) return cancel()
+      initGit = gitResult
     } else {
-      immediate = false
+      initGit = false
+    }
+  }
+
+  // 7. Ask about installing dependencies
+  let registry: string | undefined
+  let shouldInstall = argInstall || argImmediate
+  if (!shouldInstall) {
+    if (interactive) {
+      const installResult = await prompts.select({
+        message: 'Install dependencies?',
+        options: [
+          {
+            label: cyan('Yes, via Taobao mirror (recommended)'),
+            value: 'taobao',
+          },
+          {
+            label: blue('Yes, via official registry'),
+            value: 'official',
+          },
+          {
+            label: 'No',
+            value: 'no',
+          },
+        ],
+      })
+      if (prompts.isCancel(installResult)) return cancel()
+      if (installResult === 'no') {
+        shouldInstall = false
+      } else {
+        shouldInstall = true
+        registry = installResult === 'taobao' ? 'taobao' : undefined
+      }
+    } else {
+      shouldInstall = false
+    }
+  }
+
+  // 8. Ask about starting dev server
+  let shouldStart = argImmediate
+  if (shouldStart === undefined && shouldInstall) {
+    if (interactive) {
+      const startResult = await prompts.confirm({
+        message: 'Start dev server?',
+      })
+      if (prompts.isCancel(startResult)) return cancel()
+      shouldStart = startResult
+    } else {
+      shouldStart = false
     }
   }
 
@@ -278,9 +363,25 @@ async function init() {
 
   write('package.json', JSON.stringify(pkg, null, 2) + '\n')
 
-  if (immediate) {
-    install(root, pkgManager)
-    start(root, pkgManager)
+  if (initGit) {
+    prompts.log.step('Initializing Git repository...')
+    run(['git', 'init', '-b', 'main'], { stdio: 'inherit', cwd: root })
+    run(['git', 'add', '.'], { stdio: 'inherit', cwd: root })
+  }
+
+  if (shouldInstall) {
+    install(root, pkgManager, registry)
+    if (shouldStart) {
+      start(root, pkgManager)
+    } else {
+      const cdProjectName = path.relative(cwd, root)
+      let doneMessage = `Done. Now run:\n`
+      if (root !== cwd) {
+        doneMessage += `\n  cd ${cdProjectName.includes(' ') ? `"${cdProjectName}"` : cdProjectName}`
+      }
+      doneMessage += `\n  ${getRunCommand(pkgManager, 'dev').join(' ')}`
+      prompts.outro(doneMessage)
+    }
   } else {
     let doneMessage = ''
     const cdProjectName = path.relative(cwd, root)
@@ -365,9 +466,19 @@ function pkgFromUserAgent(userAgent: string | undefined): PkgInfo | undefined {
   }
 }
 
-function getInstallCommand(agent: string) {
+function getInstallCommand(agent: string, registry?: string) {
+  const registryUrl =
+    registry === 'taobao' ? 'https://registry.npmmirror.com' : undefined
+
   if (agent === 'yarn') {
+    if (registryUrl) {
+      return [agent, '--registry', registryUrl]
+    }
     return [agent]
+  }
+
+  if (registryUrl) {
+    return [agent, 'install', '--registry', registryUrl]
   }
   return [agent, 'install']
 }
