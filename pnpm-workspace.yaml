@@ -59,6 +59,7 @@ catalog:
   motion: ^12.36.0
   '@tailwindcss/typography': ^0.5.19
   zx: ^8.8.5
+  gradient-string: "^3.0.0"
 
 onlyBuiltDependencies:
   - '@parcel/watcher'
