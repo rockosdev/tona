@@ -25,7 +25,7 @@ export function LineTocCard({
   return (
     <div
       className={cn(
-        'fade-in-0 slide-in-from-bottom-4 easing-spring spring-soft animate-in',
+        'fade-in-0',
         'flex flex-col',
         className,
       )}

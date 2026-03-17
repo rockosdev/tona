@@ -1,6 +1,5 @@
 import { useRef, useState } from 'preact/hooks'
 import { useLocalStorage } from 'tona-hooks'
-import { cn } from '@/lib/utils'
 import { HoverCard } from './hover-card'
 import { LineTocCard } from './line-toc-card'
 import type { TocDataItem } from './toc-item'
