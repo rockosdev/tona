@@ -1,6 +1,6 @@
 {
   "name": "create-tona",
-  "version": "0.0.0",
+  "version": "1.0.22",
   "private": true,
   "description": "A modern, clean Tona theme with TypeScript starter template.",
   "type": "module",
