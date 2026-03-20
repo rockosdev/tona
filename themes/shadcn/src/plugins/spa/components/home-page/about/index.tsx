@@ -6,7 +6,7 @@ import { Panel, PanelContent, PanelHeader, PanelTitle } from '../../panel'
 export function About() {
   const { enable, bio } = getAboutOptions()
 
-  if (!enable) return null
+  if (!enable || !bio?.trim()) return null
 
   return (
     <Panel id="about">

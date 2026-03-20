@@ -1,3 +1,4 @@
+import { getAboutOptions, getItemGroupsOptions } from 'tona-options'
 import { BackToTop } from '../back-to-top'
 import { Footer } from '../footer'
 import { Separator } from '../separator'
@@ -9,6 +10,11 @@ import { ProfileCover } from './profile-cover'
 import { ProfileHeader } from './profile-header'
 
 export function HomePage() {
+  const { enable: aboutEnabled, bio } = getAboutOptions()
+  const { enable: itemGroupsEnabled, groups } = getItemGroupsOptions()
+  const showAbout = aboutEnabled && !!bio?.trim()
+  const showItemGroups = itemGroupsEnabled && groups.length > 0
+
   return (
     <div className="flex min-h-screen flex-col">
       <TopNavBar sticky></TopNavBar>
@@ -19,11 +25,11 @@ export function HomePage() {
           <ProfileHeader />
           <Separator />
 
-          <About />
-          <Separator />
+          {showAbout && <About />}
+          {showAbout && <Separator />}
 
-          <ItemGroups />
-          <Separator />
+          {showItemGroups && <ItemGroups />}
+          {showItemGroups && <Separator />}
 
           <PostList />
           <Separator />
