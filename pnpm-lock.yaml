@@ -6,6 +6,12 @@ settings:
 
 catalogs:
   default:
+    '@base-ui/react':
+      specifier: ^1.3.0
+      version: 1.3.0
+    '@chenglou/pretext':
+      specifier: ^0.0.3
+      version: 0.0.3
     '@clack/prompts':
       specifier: ^1.1.0
       version: 1.1.0
@@ -436,8 +442,11 @@ importers:
   themes/shadcn:
     dependencies:
       '@base-ui/react':
-        specifier: ^1.3.0
+        specifier: 'catalog:'
         version: 1.3.0(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      '@chenglou/pretext':
+        specifier: 'catalog:'
+        version: 0.0.3
       '@preact/signals':
         specifier: 'catalog:'
         version: 2.8.2(preact@10.29.0)
@@ -750,6 +759,9 @@ packages:
 
   '@cacheable/utils@2.0.1':
     resolution: {integrity: sha512-sxHjO6wKn4/0wHCFYbh6tljj+ciP9BKgyBi09NLsor3sN+nu/Rt3FwLw6bYp7bp8usHpmcwUozrB/u4RuSw/eg==}
+
+  '@chenglou/pretext@0.0.3':
+    resolution: {integrity: sha512-RQmqMqUAPRCyv4R3LlRi/ao6KbNWYclqLA+V1HS7sWgyUUbjn3JmmlfXZSY/BjM4rbmIaMSyIVisYocYGYftiQ==}
 
   '@clack/core@1.1.0':
     resolution: {integrity: sha512-SVcm4Dqm2ukn64/8Gub2wnlA5nS2iWJyCkdNHcvNHPIeBTGojpdJ+9cZKwLfmqy7irD4N5qLteSilJlE0WLAtA==}
@@ -4041,6 +4053,8 @@ snapshots:
       keyv: 5.5.2
 
   '@cacheable/utils@2.0.1': {}
+
+  '@chenglou/pretext@0.0.3': {}
 
   '@clack/core@1.1.0':
     dependencies:

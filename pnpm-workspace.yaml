@@ -58,6 +58,8 @@ catalog:
   zx: ^8.8.5
   gradient-string: '^3.0.0'
   vite-plus: latest
+  "@base-ui/react": "^1.3.0"
+  "@chenglou/pretext": "^0.0.3"
 
 onlyBuiltDependencies:
   - '@parcel/watcher'
