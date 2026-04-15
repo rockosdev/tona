@@ -40,14 +40,24 @@ export function getBlogName() {
 }
 
 /**
+ * 根据 label 从 #profile_block HTML 中提取对应的值
+ * @param {string} label - 标签文本，如 '园龄'、'粉丝'、'关注'
+ * @returns {string} 提取到的值
+ */
+function getProfileValue(label) {
+  const html = $('#profile_block').html()
+  if (!html) return ''
+  const regex = new RegExp(`${label}[：:]\\s*<[^>]*>([^<]+)`)
+  const match = html.match(regex)
+  return match ? match[1].trim() : ''
+}
+
+/**
  * 获取粉丝数
  * @returns {number} 粉丝数
  */
 export function getFollowers() {
-  if (!openNews()) return '0'
-  const text = $('#profile_block').text()
-  const match = text.match(/粉丝：\s*([0-9]+)/)
-  return match ? match[1].trim() : '0'
+  return openNews() ? getProfileValue('粉丝') || '0' : '0'
 }
 
 /**
@@ -55,10 +65,7 @@ export function getFollowers() {
  * @returns {number} 关注的人数
  */
 export function getFollowing() {
-  if (!openNews()) return '0'
-  const text = $('#profile_block').text()
-  const match = text.match(/关注：\s*([0-9]+)/)
-  return match ? match[1].trim() : '0'
+  return openNews() ? getProfileValue('关注') || '0' : '0'
 }
 
 /**
@@ -74,10 +81,7 @@ export function getFollowState() {
  * @returns {string} 园龄
  */
 export function getBlogAge() {
-  if (!openNews()) return '未知'
-  const text = $('#profile_block').text()
-  const match = text.match(/园龄：\s*([^ \n]+)/)
-  return match ? match[1].trim() : '未知'
+  return openNews() ? getProfileValue('园龄') || '未知' : '未知'
 }
 
 /**
